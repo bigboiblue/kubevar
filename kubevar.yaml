@@ -1,0 +1,5 @@
+extends: ./base.kubevar.yaml
+
+common:
+  __metadata.labels: # Double underscore to overwrite all
+    - environment: production

@@ -1,0 +1,23 @@
+vars:
+  static:
+    MY_VAR: Some Value
+    MY_MAP:
+      usesVar: Prefix-${{ MY_VAR }}
+      someOtherThing: version 1
+    MY_ARRAY:
+      - value1
+      - value2
+    WUT_VAR: ${{ MY_MAP.usesVar }}
+    LAST_VAR: ${{ MY_ARRAY[0] }}
+
+  dynamic:
+    MY_DYNAMIC_VAR: app_ns / deployment / metadata.name
+    ENTIRE_SPEC: app_ns / deployment / spec
+
+common:
+  metadata.labels:
+    - environment: unknown
+    - service: some_service
+  name: my-service-${{ MY_VAR }}
+
+resources: ./*.yaml
