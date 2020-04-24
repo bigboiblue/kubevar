@@ -1,5 +1,10 @@
 extends: ./base.kubevar.yaml
 
 common:
-  __metadata.labels: # Double underscore to overwrite all
+  metadata.labels: # Double underscore to overwrite all
     - environment: production
+
+resources:
+  - poopppppppp.yaml
+
+greg: aw

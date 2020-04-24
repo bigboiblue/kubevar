@@ -1,3 +1,5 @@
+# Desired Formatting
+
 vars:
   static:
     MY_VAR: Some Value
@@ -18,6 +20,9 @@ common:
   metadata.labels:
     - environment: unknown
     - service: some_service
-  name: my-service-${{ MY_VAR }}
+  metadata.name: my-service-${{ MY_VAR }}
 
-resources: ./*.yaml
+resources:
+  - "*.yaml"
+
+dWOIJ: dOIJW

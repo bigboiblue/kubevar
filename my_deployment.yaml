@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: Test deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        editor: vscode
+    spec:
+      containers:
+        - name: alpine
+          image: alpine:latest
