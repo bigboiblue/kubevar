@@ -11,6 +11,13 @@ vars:
       - value2
     WUT_VAR: ${{ MY_MAP.usesVar }}
     LAST_VAR: ${{ MY_ARRAY[0] }}
+    MY_EDITOR: SUBLIME TEXT BITCHESSSSS
+    EXTRA_METADATA:
+      name: Great container stuff
+      labels:
+        application: gregory
+        service: idk
+        hello: ive been added
 
   dynamic:
     MY_DYNAMIC_VAR: app_ns / deployment / metadata.name

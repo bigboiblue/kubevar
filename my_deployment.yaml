@@ -1,14 +1,19 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: Test deployment
+  name: "Test \ndeployment"
 spec:
+  ${{}}: ${{EXTRA_METADATA}}
   replicas: 3
   template:
     metadata:
       labels:
-        editor: vscode
-    spec:
-      containers:
-        - name: alpine
-          image: alpine:latest
+        editor: ${{     MY_EDITOR }}
+      spec:
+        containers:
+          - name: alpine
+            image: alpine:latest
+          - ${{     MY_EDITOR }}
+          - ${{     MY_EDITOR }}
+          - name: alpine
+          - ${{     MY_EDITOR }}

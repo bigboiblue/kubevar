@@ -4,7 +4,6 @@ common:
   metadata.labels: # Double underscore to overwrite all
     - environment: production
 
-resources:
-  - poopppppppp.yaml
+resources: {}
 
 greg: aw

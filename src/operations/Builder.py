@@ -5,7 +5,8 @@ import re
 from .util.checking import err, warn
 from .util.yaml import load_yaml
 from glob import glob
-from typing import Set
+from typing import Set, Tuple, Any, List
+from .Resources import Resources
 
 class Builder:
     build_help = """
@@ -21,9 +22,6 @@ class Builder:
     def __init__(self):
         self.file= ""
         self.directory = ""
-        self.base_config: dict = dict()
-        self.config: dict = dict()
-        self.resources: list = [dict()]
         self.framework_config = {
             "vars": {
                 "dynamic": {},
@@ -32,7 +30,7 @@ class Builder:
             "common": {},
             "resources": []
         }
-    ###
+
 
 
     def get_file_from_path(self, path: str) -> str:
@@ -46,10 +44,9 @@ class Builder:
                 * If you specified a \033[1;33mdirectory\033[m, no kubevar.yaml is present in that directory\
                 * If you specified a \033[1;33mfile\033[m, it is not a yaml file")
         return file
-    ###
+    
 
-
-    def translate_resources(self, config: dict, arePathsTranslated = True):
+    def unglob_resources(self, config: dict, arePathsTranslated = True):
         res_names: Set[str] = set()
         if "resources" in config:
             ### If wildcard exists, add files according to wildcard
@@ -61,7 +58,8 @@ class Builder:
                 res_names |=  glob_names if len(glob_names) > 0 else {res_path}
 
             config["resources"] = list(res_names)
-    ###
+
+
 
     def get_merged_config(self, base_config: dict, config: dict, config_dir = None) -> dict:
         config_dir = self.directory if config_dir == None else config_dir
@@ -85,7 +83,6 @@ class Builder:
                 if key not in self.framework_config:
                     warn(f"Unknown attribute: '{key}'")
                 
-
         if "extends" in merged_config: # Repeat the process
             new_config = merged_config
             new_config_dir = os.path.join(config_dir, config["extends"]) # The new config_dir is the previous base_config dir. This is needed since they are relative directories
@@ -106,25 +103,70 @@ class Builder:
             merged_config.pop(key)
 
         return merged_config
-    ###
+
+
+
+
+    def check_variable_collisions(self, config: dict):
+        vars = config["vars"]
+        for static_var in vars["static"]:
+            if static_var in vars["dynamic"]:
+                err(f"Variable collision --- {static_var} included in both static and dynamic vars...")
+
+
+    # def replace_variables_in_resource(self, variables: dict, resource: str) -> str:
+    #     for label, value in variables.items():
+    #         pattern = re.compile("\$\{\{\s*%s\s*\}\}" % label)
+    #         # if type(value) == str:
+    #         #     resource = pattern.sub(value, resource)
+    #         # if type(value) == dict:
+    #             # for line in resource.splitlines():
+    #             #     indent = len(line) - len(line.lstrip(' '))
+    #             #     if pattern.search(resource) != None:
+    #             #         value = yaml.dump(value, indent=2).strip()
+    #             #         value = value.replace("\n", "\n".ljust(indent))
+    #             #         pattern.sub(value, resource)
+                
+
+    #     return resource
+
+
+    
+
+    # def replace_variables(self, variables: dict, resources: List[dict]) -> List[dict]:
+    #     new_resources = resources.copy()
+    #     for res in new_resources:
+    #         res = self.replace_variables_in_resource(variables, res)
+    #     return new_resources
+
+
     
     def build(self, path: str):
+        ######## Retreive data ########
         self.file = self.get_file_from_path(path)
         self.directory = os.path.dirname(self.file)
 
-        self.config = load_yaml(self.file)
-        if "extends" in self.config:
-            base_config_path = os.path.join(self.directory, self.config["extends"])
-            self.base_config = load_yaml(base_config_path)
+        config = load_yaml(self.file)
+        base_config = {}
+        if "extends" in config:
+            base_config_path = os.path.join(self.directory, config["extends"])
+            base_config = load_yaml(base_config_path)
         
-        ### Applied framework to each
-        self.base_config = {**self.framework_config, **self.base_config}
-        self.config = {**self.framework_config, **self.config}
+        # Applied framework to each
+        config = {**self.framework_config, **config}
+        base_config = {**self.framework_config, **base_config}
 
-        merged_config = self.get_merged_config(self.base_config, self.config)
-        self.translate_resources(merged_config)
+        merged_config = self.get_merged_config(base_config, config)
+        self.unglob_resources(merged_config)
 
-        print(yaml.dump(merged_config, indent=2, line_break=lambda: True,))
+        self.check_variable_collisions(merged_config)
+
+        ######## Replace resources ########
+        resources = Resources(merged_config["resources"])
+        resources.replace_variables(merged_config["vars"]["static"])
+        # print(resources)
+        # self.replace_dynamic_variables(merged_config) #Will implement later
+        # self.add_common_attributes(merged_config)
         
     ###
 
@@ -136,4 +178,3 @@ class Builder:
 def build(path: str):
     builder = Builder()
     builder.build(path)
-###
