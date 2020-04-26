@@ -16,7 +16,6 @@ class Resources:
         for res in self.resources:
             for key_path, value in attributes.items():
                 res[key_path] = value
-                
 
 
     def replace_variables(self, variables: dict):

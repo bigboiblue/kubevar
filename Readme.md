@@ -22,6 +22,20 @@
 ## Installation
 
 ### Mac and Linux
+
+#### Development
+
+In order to setup the virtual environment (venv) for development, run the following commands:
+
+    git clone https://gitlab.com/kubevar/kubevar-tk.git
+    cd kubevar-tk
+    chmod +x setup_venv.sh
+    ./setup_venv.sh
+
+Since this is a private repo, your gitlab credentials are required
+
+
+<!-- ### Mac and Linux
 Run the following command in a terminal with a POSIX compliant shell:
 
     git clone https://gitlab.com/bit-memo/devtools/varsub.git
@@ -34,7 +48,12 @@ Since this is a private repo, your gitlab credentials are required
 ---
 To uninstall, simply use:
 
-    sudo rm /usr/local/bin/varsub
+    sudo rm /usr/local/bin/varsub -->
 
 ### Windows
-This is not currently supported for windows (except through virtualising Linux, perhaps through cygwin etc)
+
+#### Development
+
+A setup tool has not yet been created for windows, though the steps are quite simple. Open setup_venv.sh and mimic the steps using the MS_DOS equivalent of the commands used
+
+<!-- This is not currently supported for windows (except through virtualising Linux, perhaps through cygwin etc) -->
