@@ -8,8 +8,11 @@
             "name": "Python: File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/kubevar.py",
-            "console": "integratedTerminal"
+            "program": "${workspaceFolder}/src/kubevar",
+            "console": "integratedTerminal",
+            "args": [
+                "build"
+            ]
         }
     ]
 }

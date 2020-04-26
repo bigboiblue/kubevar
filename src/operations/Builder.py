@@ -114,32 +114,6 @@ class Builder:
                 err(f"Variable collision --- {static_var} included in both static and dynamic vars...")
 
 
-    # def replace_variables_in_resource(self, variables: dict, resource: str) -> str:
-    #     for label, value in variables.items():
-    #         pattern = re.compile("\$\{\{\s*%s\s*\}\}" % label)
-    #         # if type(value) == str:
-    #         #     resource = pattern.sub(value, resource)
-    #         # if type(value) == dict:
-    #             # for line in resource.splitlines():
-    #             #     indent = len(line) - len(line.lstrip(' '))
-    #             #     if pattern.search(resource) != None:
-    #             #         value = yaml.dump(value, indent=2).strip()
-    #             #         value = value.replace("\n", "\n".ljust(indent))
-    #             #         pattern.sub(value, resource)
-                
-
-    #     return resource
-
-
-    
-
-    # def replace_variables(self, variables: dict, resources: List[dict]) -> List[dict]:
-    #     new_resources = resources.copy()
-    #     for res in new_resources:
-    #         res = self.replace_variables_in_resource(variables, res)
-    #     return new_resources
-
-
     
     def build(self, path: str):
         ######## Retreive data ########
@@ -163,10 +137,10 @@ class Builder:
 
         ######## Replace resources ########
         resources = Resources(merged_config["resources"])
+        resources.add_common_attributes(merged_config["common"])
         resources.replace_variables(merged_config["vars"]["static"])
-        # print(resources)
+        print(resources)
         # self.replace_dynamic_variables(merged_config) #Will implement later
-        # self.add_common_attributes(merged_config)
         
     ###
 
