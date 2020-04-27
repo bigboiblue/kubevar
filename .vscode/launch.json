@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Module",
+            "type": "python",
+            "request": "launch",
+            "module": "kubevar_pkg",
+            "args": [
+                "apply"
+            ]
+        },
+        {
             "name": "Python: File",
             "type": "python",
             "request": "launch",
