@@ -1,6 +1,7 @@
 ## Temporary ignore files (these are files used for testing)
-/*kubevar.yaml
+/*kubevar*.yaml
 /my_deployment*.yaml
+/my_service.yaml
 
 ###### PYTHON STUFF #######
 # Byte-compiled / optimized / DLL files

@@ -10,19 +10,21 @@ class Resources:
     def __init__(self, resource_names: List[str]):
         self.resources: List[benedict] = [] 
         for res_name in resource_names:
-            self.resources.append(benedict(load_yaml(res_name)))
-    
+            yamls = load_yaml(res_name, multiple=True)
+            for y in yamls:
+                self.resources.append(benedict(y, keypath_separator=None))
+
     def add_common_attributes(self, attributes: dict):
         for res in self.resources:
             for key_path, value in attributes.items():
-                res[key_path] = value
-
+                key_path_list = key_path.split('.') # Cannot use dot separator in benedict
+                res[key_path_list] = value
 
     def replace_variables(self, variables: dict):
         for res in self.resources:
             self.replace_variables_for_res(variables, res)
 
-    def replace_variables_for_res(self, variables: dict, res: benedict, potentials = benedict()) -> benedict:
+    def replace_variables_for_res(self, variables: dict, res: benedict, potentials = benedict({}, keypath_separator=None)) -> benedict:
         old_keys: list = []
         new_keys: list= []
 
@@ -39,10 +41,14 @@ class Resources:
                     res.pop(old_key[:-1])
                     for list_item in value:
                         res[old_key[:-2]].append(list_item)
-                elif isinstance(res[old_key[:-1]], dict):
+                elif len(old_key) > 1 and isinstance(res[old_key[:-1]], dict):
                     if not isinstance(value, dict):
                         err("Using ${{}} syntax in a map means the value should also be a map")
                     res[old_key[:-1]] = {**res[old_key[:-1]], **value}
+                elif len(old_key) == 1: # This is top level
+                    if not isinstance(value, dict):
+                        err("Using ${{}} syntax in a map means the value should also be a map")
+                    res = {**res, **value}
                 else:
                     err("Only arrays or maps can be used with the ${{}} syntax")
             else:
