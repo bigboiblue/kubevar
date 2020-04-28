@@ -61,6 +61,7 @@ class Builder:
                 res_names |=  glob_names if len(glob_names) > 0 else {res_path}
 
             config["resources"] = list(res_names)
+        
 
 
 

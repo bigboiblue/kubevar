@@ -10,6 +10,7 @@ def cli():
 def get_globbed_paths(paths) -> list:
     from os import path
     from glob import glob
+    from .operations.util.checking import err
 
     paths = list(paths)
     if len(paths) == 0:
@@ -21,6 +22,8 @@ def get_globbed_paths(paths) -> list:
         # if path.isdir(str(p)):
         #     p = path.join(p, "kubevar.yaml")
         paths = [*paths, *glob(p, recursive=True)]
+        if len(paths) == 0:
+            err(f"{p} does not match any files or directories")
     return paths
 
 "Paths to the .kubevar.yaml config files. Globs are allowed (so you can recursively apply)"
@@ -44,10 +47,10 @@ def build(paths: list):
 @click.argument("PATHS", required=False, nargs=-1)
 @click.option("-o", "--output", help="Output built yaml to console", default=False, required=False, type=bool, is_flag=True)
 def apply(paths: list, output: bool):
+    paths = get_globbed_paths(paths)
+
     import subprocess
     from .operations.Builder import Builder
-
-    paths = get_globbed_paths(paths)
 
     for p in paths:
         builder = Builder() #//TODO: allow build to be called more than once on a single object (do cleanup)
