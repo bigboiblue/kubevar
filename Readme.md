@@ -23,7 +23,18 @@
 
 ### Mac and Linux
 
-#### Development
+#### Normal Install
+
+In order to install the kubevar utility, run the following commands:
+
+    git clone https://gitlab.com/kubevar/kubevar-tk.git
+    cd kubevar-tk
+    chmod +x install.sh
+    ./install.sh
+
+Since this is a private repo, your gitlab credentials are required
+
+#### Setup Venv for Development
 
 In order to setup the virtual environment (venv) for development, run the following commands:
 

@@ -11,7 +11,10 @@
             "module": "kubevar_pkg",
             "args": [
                 "apply"
-            ]
+            ],
+            "env": {
+                "KUBEVAR_ENV": "dev"
+            }
         },
         {
             "name": "Python: File",
@@ -21,7 +24,10 @@
             "console": "integratedTerminal",
             "args": [
                 "apply"
-            ]
+            ],
+            "env": {
+                "KUBEVAR_ENV": "dev"
+            }
         }
     ]
 }
