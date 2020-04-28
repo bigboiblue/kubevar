@@ -1,12 +1,9 @@
 import click
 import os
-import yaml
-import re
 from .util.checking import err, warn
 from .util.yaml import load_yaml
-from glob import glob
-from typing import *
-from .Resources import Resources
+
+from typing import Dict, List, Tuple, Union, Optional, Any
 from benedict import benedict
 
 class Builder:
@@ -51,6 +48,8 @@ class Builder:
     
 
     def unglob_resources(self, config: dict, arePathsTranslated = True):
+        from glob import glob
+        
         res_names: Set[str] = set()
         if "resources" in config:
             ### If wildcard exists, add files according to wildcard
@@ -149,6 +148,8 @@ class Builder:
         return config
 
     def build(self, path: str) -> str:
+        from .Resources import Resources
+
         ######## Retreive data ########
         self.file = self.get_file_from_path(path)
         self.directory = os.path.dirname(self.file)
@@ -179,16 +180,9 @@ class Builder:
 
         return str(self.resources)
             
-        # print(yaml.dump(merged_config, indent=2))
         
     ###
 
 
 
 ###
-
-@click.command(help=Builder.build_help)
-@click.argument("PATH", required=False, default='.')
-def build(path: str):
-    builder = Builder()
-    print(builder.build(path), flush=True)

@@ -1,9 +1,8 @@
 from .util.yaml import load_yaml
 from .util.checking import err, warn
 from benedict import benedict
-from typing import *
+from typing import Dict, List, Tuple, Union, Optional, Any
 import yaml
-from copy import deepcopy
 import re
 
 class Resources:    
@@ -85,6 +84,8 @@ class Resources:
 
 
     def replace_res_values(self, res: benedict, key: list, pattern, variables: dict):
+        from copy import deepcopy
+        
         if type(res[key]) == str:
                 value_matches = pattern.finditer(res[key])
                 for match in value_matches:

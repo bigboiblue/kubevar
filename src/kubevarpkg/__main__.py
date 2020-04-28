@@ -1,12 +1,19 @@
 
 
 import click
-from .operations.Builder import build, Builder
-import subprocess
 
 @click.group()
 def cli():
     pass
+
+
+@click.command(help="Help is to be added in the future")
+@click.argument("PATH", required=False, default='.')
+def build(path: str):
+    from .operations.Builder import Builder
+    builder = Builder()
+    print(builder.build(path), flush=True)
+
 
 
 #//TODO: add help msg
@@ -14,6 +21,9 @@ def cli():
 @click.argument("PATH", required=False, default='.')
 @click.option("-o", "--output", help="Output built yaml to console", default=False, required=False, type=bool, is_flag=True)
 def apply(path: str, output):
+    import subprocess
+    from .operations.Builder import Builder
+
     builder = Builder()
     yaml = builder.build(path)
     print("Configuration built, applying...")
