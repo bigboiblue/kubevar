@@ -16,7 +16,23 @@ class Resources:
     def add_common_attributes(self, attributes: dict):
         for res in self.resources:
             for key_path, value in attributes.items():
+
+                replacements:List[Tuple[int, str]] = []
+                for match in re.finditer('".*"', key_path):
+                    index = key_path.count('.', 0, match.start())
+                    attr = key_path[match.start()+1:match.end()-1]
+                    print(attr)
+                    replacements.append((index, attr))
+                key_path = re.sub('".*"', "", key_path)
                 key_path_list = key_path.split('.') # Cannot use dot separator in benedict
+
+                for index, attr in replacements:
+                    key_path_list[index] = attr
+
+                for index, path in enumerate(key_path_list):
+                    if path.startswith('"'):
+                        key_path_list[index] = path[1:]
+
                 res[key_path_list] = value
 
     def replace_variables(self, variables: dict):

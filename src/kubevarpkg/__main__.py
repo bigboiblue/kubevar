@@ -1,5 +1,3 @@
-
-
 import click
 
 @click.group()
@@ -19,8 +17,6 @@ def get_globbed_paths(paths) -> list:
     temp_paths = paths
     paths = []
     for i, p in enumerate(temp_paths):
-        # if path.isdir(str(p)):
-        #     p = path.join(p, "kubevar.yaml")
         paths = [*paths, *glob(p, recursive=True)]
         if len(paths) == 0:
             err(f"{p} does not match any files or directories")
