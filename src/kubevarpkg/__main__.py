@@ -54,12 +54,11 @@ def apply(paths: list, output: bool):
             print(yaml)
         print(f"\n----\n\033[1;34mConfiguration built for {p}, applying...\033[m\n----\n")
         
-        # subprocess.call([f"printf({output})", "|", "kubectl", "apply" "-f=-"], stdout=subprocess.PIPE)
         command = "cat - | kubectl apply -f -"
         proc = subprocess.Popen(["/bin/bash", "-c", "--", command], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        proc.communicate(bytes(yaml, "utf-8"))
-        stdout = proc.communicate()[0]
-        print(stdout.decode("utf-8"))
+        # This has to be one step. Doing this in two steps (give stdin, get stdout) will cause subprocess to close prematurely
+        stdout = proc.communicate(bytes(yaml, "utf-8"))[0].decode("utf-8") 
+        print(stdout)
     
 
 
