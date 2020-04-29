@@ -30,7 +30,6 @@ def build(paths: list):
     paths = get_globbed_paths(paths)
 
     for p in paths:
-        print(f"\n----\n\033[1;34mBuilding path: {p}\033[m\n----\n")
         from .operations.Builder import Builder
         builder = Builder()
         print(builder.build(str(p)), flush=True)
