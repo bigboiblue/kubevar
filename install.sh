@@ -24,7 +24,7 @@ EGG_FILE="$DIST_DIR/$(cd "$DIST_DIR"; ls)"
 LIB_PATH="/usr/local/lib/kubevar"
 sudo python3 -m venv "$LIB_PATH"
 source "$LIB_PATH/bin/activate"
-sudo easy_install "$EGG_FILE"
+sudo "$LIB_PATH/bin/easy_install" "$EGG_FILE"
 deactivate
 
 
