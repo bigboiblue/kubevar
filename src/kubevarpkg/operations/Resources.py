@@ -13,6 +13,9 @@ class Resources:
             for y in yamls:
                 self.resources.append(benedict(y, keypath_separator=None))
 
+
+
+
     def add_common_attributes(self, attributes: dict):
         for res in self.resources:
             for key_path, value in attributes.items():
@@ -35,9 +38,14 @@ class Resources:
 
                 res[key_path_list] = value
 
+
+
     def replace_variables(self, variables: dict):
         for res in self.resources:
             self.replace_variables_for_res(variables, res)
+
+
+
 
     def replace_variables_for_res(self, variables: dict, res: benedict, potentials = benedict({}, keypath_separator=None)) -> benedict:
         old_keys: list = []
@@ -47,6 +55,8 @@ class Resources:
         res = self.recurse_replace_variables_for_res(variables, res, old_keys, new_keys, cur_pass="key")
         old_keys.reverse()
         new_keys.reverse()
+
+        ### Implement ${{}} syntax
         for index, old_key in enumerate(old_keys):
             if new_keys[index][-1] == "": # if ${{}}
                 value = res.pop(old_key)
@@ -70,6 +80,9 @@ class Resources:
                 res[new_keys[index]] = res.pop(old_key)
                 
         return res
+
+
+
 
 
     ## // TODO: convert recusion into loop
@@ -99,22 +112,28 @@ class Resources:
         return res
 
 
+
+
+
     def replace_res_values(self, res: benedict, key: list, pattern, variables: dict):
         from copy import deepcopy
         
         if type(res[key]) == str:
-                value_matches = pattern.finditer(res[key])
-                for match in value_matches:
-                    var_name = res[key][match.start() + 3:match.end() - 2].strip()
-                    
-                    for label, value in variables.items():
-                        if var_name == label:
-                            if type(value) != str:
-                                res[key] = deepcopy(value)
-                            else:
-                                res[key] = res[key][:match.start()] + str(value) + res[key][match.end():]
-                            break
+            value_matches = pattern.finditer(res[key])
+            for match in value_matches:
+                var_name = res[key][match.start() + 3:match.end() - 2].strip()
+                
+                for label, value in variables.items():
+                    if var_name == label:
+                        if type(value) != str:
+                            res[key] = deepcopy(value)
+                        else:
+                            res[key] = res[key][:match.start()] + str(value) + res[key][match.end():]
+                        break
     
+
+
+
 
     def get_key_replacements(self, res, key, pattern, variables) -> Tuple[List, List]:
         new_keys, old_keys = [], []
@@ -133,6 +152,9 @@ class Resources:
                     new_keys.append([*key[:-1], new_key_value])
                     
         return old_keys, new_keys
+
+
+
 
 
 

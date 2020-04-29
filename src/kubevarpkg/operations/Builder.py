@@ -2,9 +2,10 @@ import click
 import os
 from .util.checking import err, warn
 from .util.yaml import load_yaml
-
+import re
 from typing import Dict, List, Tuple, Union, Optional, Any
 from benedict import benedict
+from base64 import b64encode
 
 class Builder:
     build_help = """
@@ -34,6 +35,9 @@ class Builder:
 
 
 
+
+
+
     def get_file_from_path(self, path: str) -> str:
         path = path.strip()
         if not os.path.exists(path):
@@ -46,6 +50,9 @@ class Builder:
                 * If you specified a \033[1;33mfile\033[m, it is not a yaml file")
         return file
     
+
+
+
 
     def unglob_resources(self, config: dict, arePathsTranslated = True):
         from glob import glob
@@ -62,6 +69,8 @@ class Builder:
 
             config["resources"] = list(res_names)
         
+
+
 
 
 
@@ -126,6 +135,10 @@ class Builder:
                 err(f"Variable collision --- {static_var} included in both static and dynamic vars...")
 
 
+
+
+
+
     def get_converted_file_variables(self, variables: dict) -> dict:
         converted_variables: Dict[str, str] = {}
         
@@ -139,6 +152,10 @@ class Builder:
                 converted_variables[key] = contents
         return converted_variables
 
+
+
+
+
     def apply_framework(self, framework: dict, config: Any) -> dict:
         if isinstance(config, dict) and isinstance(framework, dict):
             for key, value in framework.items():
@@ -148,6 +165,24 @@ class Builder:
                     self.apply_framework(framework[key], config[key])
         return config
 
+
+
+
+    def preprocess_config(self, config: Union[dict, list]):        
+        iterable = range(len(config)) if type(config) == list else config.keys()
+
+        ### b64 encode 
+        pattern = re.compile("\~b64\(\(.*\)\)")
+        for key in iterable: # Could be a list or dict
+            if type(config[key]) == str:
+                replacements = pattern.findall(config[key])
+                for r in replacements:
+                    r = str(r[6:-2])
+                    r = b64encode(r.encode("utf-8")).decode("utf-8")
+                    config[key] = pattern.sub(r, config[key], 1)
+            if isinstance(config[key], dict) or type(config[key]) == list:
+                self.preprocess_config(config[key])
+
     def build(self, path: str) -> str:
         from .Resources import Resources
 
@@ -156,7 +191,7 @@ class Builder:
         self.directory = os.path.dirname(self.file)
 
         config = load_yaml(self.file)
-        base_config = {}
+        base_config: dict = {}
         if "extends" in config:
             base_config_path = os.path.join(self.directory, config["extends"])
             base_config = load_yaml(base_config_path)
@@ -169,6 +204,7 @@ class Builder:
         self.unglob_resources(merged_config)
 
         self.check_variable_collisions(merged_config)
+        self.preprocess_config(merged_config)
 
         ######## Replace resources ########
         self.resources = Resources(merged_config["resources"])
