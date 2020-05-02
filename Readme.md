@@ -1,8 +1,4 @@
-## Dependencies
-
-
-
-# 
+# Kubevar
 
 ## Introduction
 

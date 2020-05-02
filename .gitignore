@@ -2,6 +2,13 @@
 /*kubevar*.yaml
 /my_deployment*.yaml
 /my_service.yaml
+/test/
+
+
+## Ignore IDE project files
+/.idea
+/.vscode
+
 
 ###### PYTHON STUFF #######
 # Byte-compiled / optimized / DLL files
