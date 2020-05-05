@@ -1,23 +1,12 @@
-import click
 import os
-from .util.checking import err, warn
-from .util.yaml import load_yaml
+from ..util.checking import err, warn
+from ..util.yaml import load_yaml
 import re
-from typing import Dict, List, Tuple, Union, Optional, Any
+from typing import Dict, Union, Any, Set, Tuple
 from benedict import benedict
 from base64 import b64encode
 
 class Builder:
-    build_help = """
-        --- Overview ---\n
-        Output kubernetes manifests (yaml) where all ${{ VARIABLES }} are converted into the values defined in file specified by PATH.\n
-        --- Conventions ---\n
-        It is convention for the file at PATH to take the format *.kubervar.yaml therefore there is no need to append ".kubevar.yaml" to the PATH if convention is followed.\n
-        If the file you are referencing is simply named "kubevar.yaml", then PATH only needs to specify the directory. Additionally, PATH does not need to be specified if you currently reside in the target directory\n
-        --- *.kubevar.yaml format ---\n
-    """
-
-
     def __init__(self):
         self.resources = None
         self.file= ""
@@ -45,9 +34,9 @@ class Builder:
 
         file = os.path.join(path, "kubevar.yaml") if os.path.isdir(path) else path
         if not os.path.isfile(file) or not file.endswith(".yaml"):
-            err("Incorrect path.\n\
-                * If you specified a \033[1;33mdirectory\033[m, no kubevar.yaml is present in that directory\
-                * If you specified a \033[1;33mfile\033[m, it is not a yaml file")
+            err("""Incorrect path.
+* If you specified a \033[1;33mdirectory\033[m, no kubevar.yaml is present in that directory
+* If you specified a \033[1;33mfile\033[m, it is not a yaml file""")
         return file
     
 

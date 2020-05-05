@@ -8,7 +8,6 @@ requires = []
 with open(requirements_path) as req:
     for line in req:
         requires.append(line.strip())
-print(find_packages(script_dir))
 setup(
     name="kubevarpkg",
     packages=find_packages(script_dir),
