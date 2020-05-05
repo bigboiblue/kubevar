@@ -1,4 +1,0 @@
-tokens:
-  GRAVE: '`.*`' # `` <-- Token.GRAVE
-  FUNC: '\~.*\$\(\(\.*\)\)' # ~y$((x)) <-- Token.FUNC
-  VAR: '\$\{\{.*\}\}' # ${{x}} <-- Token.VAR

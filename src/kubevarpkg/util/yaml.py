@@ -24,6 +24,8 @@ def load_yaml(file_name: str, error_msg: str = None, *, multiple=False) -> Union
     return yaml_output
 
 
+
+
 FuncType = Callable[[str, Union[str, int, float, list, dict]], Union[list, dict]]
 def recursive_map(func: FuncType, it: Union[list, dict]) -> Union[list, dict]:
     """func(x, y) must have 2 params (key and value) and return a tuple (key, value).
@@ -43,8 +45,3 @@ def recursive_map(func: FuncType, it: Union[list, dict]) -> Union[list, dict]:
         if isinstance(it[key], dict) or type(it[key]) == list:
             new[key] = recursive_map(func, it[key])
     return new
-
-def clean_escapes(yaml_dict: dict) -> dict:
-    yaml_str = dump(yaml_dict)
-    # yaml_str = re_sub("\\\\", "\\", yaml_str)
-    return
