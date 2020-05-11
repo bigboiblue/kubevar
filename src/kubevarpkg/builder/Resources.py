@@ -1,9 +1,10 @@
 from ..util.yaml import load_yaml
 from ..util.checking import err
 from benedict import benedict
-from typing import List, Tuple
+from typing import List, Tuple, Any, Dict
 import yaml
 import re
+from ..util.dict import recursive_map
 
 class Resources:    
     def __init__(self, resource_names: List[str]):
@@ -12,8 +13,6 @@ class Resources:
             yamls = load_yaml(res_name, multiple=True)
             for y in yamls:
                 self.resources.append(benedict(y, keypath_separator=None))
-
-
 
 
     def add_common_attributes(self, attributes: dict):
@@ -39,17 +38,62 @@ class Resources:
                 res[key_path_list] = value
 
 
+    #
+    # def replace_variables(self, variables: dict):
+    #     for res in self.resources:
+    #         self.replace_variables_for_res(variables, res)
+
 
     def replace_variables(self, variables: dict):
-        for res in self.resources:
-            self.replace_variables_for_res(variables, res)
+        """
+        Replaces all occurrences of variables in a resource
+        :param variables: a dictionary where first order keys are the var names,
+        and their values correspond to the variables value
+        """
+        from ..token import Token
+        from .DictSlice import DictSlice
 
+        omit_dict: Dict[tuple, DictSlice] = {}
+        def func(key: str, val: Any, key_path: list) -> tuple:
+            key_path = tuple(key_path)
+            omit = []
+            new_key = key
+            for token in Token:
+                pattern = re.compile(f"[^`]{token.value}[^`]")
+                key_matches = pattern.finditer(str(key))
+                for match in key_matches:
+                    should_not_replace = False
+                    for o in omit:
+                        if key_path == o.key_path and o.type == "KEY" and o.overlaps(match.start(), match.end()):
+                            should_not_replace = True
+                            break
+                    if should_not_replace:
+                        # print(f"BAD: {key[match.start(): match.end()]}")
+                        continue
+
+                    # print(f"GOOD: {key[match.start(): match.end()]}")
+
+
+
+                    if token == Token.GRAVE:
+                        omit.append(DictSlice("KEY", match.start(), match.end(), key_path))
+                    if token == Token.FUNC:
+                        pass
+                    if token == Token.VAR:
+                        new_key = key[:match.start()] + "OIJOIJ" + key[match.end():]
+                        new_key = pattern.sub("daWDwdw", key)
+            if key != new_key:
+                print(f"Changed key:'{new_key}'")
+            return new_key, val
+
+        for i, res in enumerate(self.resources):
+            self.resources[i] = recursive_map(func, res)
 
 
 
     def replace_variables_for_res(self, variables: dict, res: benedict, potentials = benedict({}, keypath_separator=None)) -> benedict:
         old_keys: list = []
-        new_keys: list= []
+        new_keys: list = []
 
         res = self.recurse_replace_variables_for_res(variables, res, cur_pass="value")
         res = self.recurse_replace_variables_for_res(variables, res, old_keys, new_keys, cur_pass="key")
@@ -152,9 +196,6 @@ class Resources:
                     new_keys.append([*key[:-1], new_key_value])
                     
         return old_keys, new_keys
-
-
-
 
 
 

@@ -5,6 +5,6 @@ class Token(Enum):
 
     # __order__ = "GRAVE FUNC VAR" <-- Order is automatically generated
     GRAVE = "`.*`"
-    FUNC = "\~.*\$\(\(.*\)\)"
-    VAR = "\$\{\{.*\}\}"
+    FUNC = "\~.*\$\(\([^(${{)]*\)\)"
+    VAR = "\$\{\{\s*\}\}"
 

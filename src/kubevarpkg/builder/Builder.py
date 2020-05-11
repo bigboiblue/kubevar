@@ -80,10 +80,7 @@ class Builder:
         ### Pre-process
         self.apply_framework(config)
         self.apply_framework(base_config)
-
-
         merged_config = base_config
-
         config = self.convert_paths(config, config_dir)
         merged_config = self.convert_paths(merged_config, base_config_dir)
 
@@ -142,6 +139,7 @@ class Builder:
 
 
     def get_converted_file_variables(self, variables: dict) -> dict:
+        """Put contents of file in passed file variable dict and return it"""
         converted_variables: Dict[str, str] = {}
         
         for key, value in variables.items():
