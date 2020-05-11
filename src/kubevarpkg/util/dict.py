@@ -8,7 +8,6 @@ def recursive_map(func: FuncType, it: Union[list, dict], key_path = []) -> Union
     The list / dict passed is traversed using a breadth first traversal"""
     new = list() if type(it) == list else dict()
     keys = range(len(list(it))) if type(it) == list else it.keys()
-    call_queue = []  # Cannot use call stack since breadth first is required (which needs queue) to delete unwanted keys
 
     for key in keys:
         ret = func(key, it[key], [*key_path, key])
@@ -29,13 +28,7 @@ def recursive_map(func: FuncType, it: Union[list, dict], key_path = []) -> Union
                 new[new_key] = new_value
 
             if (isinstance(it[key], dict) or type(it[key]) == list):
-                new_key_path = deepcopy([*key_path, key])
-                # call_queue.append((key, func, it[key], new_key_path))
+                new_key_path = deepcopy([*key_path, key])  # Key path refers to old maps key path (new may be different due to changed keys)
                 new[new_key] = recursive_map(func, it[key], new_key_path)
-
-    # print(key_path)
-    # if len(call_queue) != 0:
-    #     key, *args = call_queue.pop(0)
-    #     new[key] = recursive_map(*args)
 
     return new

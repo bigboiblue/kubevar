@@ -6,27 +6,27 @@ import yaml
 import re
 from ..util.dict import recursive_map
 
-class Resources:    
+
+class Resources:
     def __init__(self, resource_names: List[str]):
-        self.resources: List[benedict] = [] 
+        self.resources: List[benedict] = []
         for res_name in resource_names:
             yamls = load_yaml(res_name, multiple=True)
             for y in yamls:
                 self.resources.append(benedict(y, keypath_separator=None))
 
-
     def add_common_attributes(self, attributes: dict):
         for res in self.resources:
             for key_path, value in attributes.items():
 
-                replacements:List[Tuple[int, str]] = []
+                replacements: List[Tuple[int, str]] = []
                 for match in re.finditer('".*"', key_path):
                     index = key_path.count('.', 0, match.start())
-                    attr = key_path[match.start()+1:match.end()-1]
+                    attr = key_path[match.start() + 1:match.end() - 1]
                     print(attr)
                     replacements.append((index, attr))
                 key_path = re.sub('".*"', "", key_path)
-                key_path_list = key_path.split('.') # Cannot use dot separator in benedict
+                key_path_list = key_path.split('.')  # Cannot use dot separator in benedict
 
                 for index, attr in replacements:
                     key_path_list[index] = attr
@@ -37,12 +37,10 @@ class Resources:
 
                 res[key_path_list] = value
 
-
     #
     # def replace_variables(self, variables: dict):
     #     for res in self.resources:
     #         self.replace_variables_for_res(variables, res)
-
 
     def replace_variables(self, variables: dict):
         """
@@ -51,47 +49,47 @@ class Resources:
         and their values correspond to the variables value
         """
         from ..token import Token
-        from .DictSlice import DictSlice
 
-        omit_dict: Dict[tuple, DictSlice] = {}
         def func(key: str, val: Any, key_path: list) -> tuple:
             key_path = tuple(key_path)
-            omit = []
             new_key = key
             for token in Token:
-                pattern = re.compile(f"[^`]{token.value}[^`]")
+                if token == Token.ESCAPE:
+                    continue
+                offset = 0
+                pattern = re.compile(token.value)
                 key_matches = pattern.finditer(str(key))
                 for match in key_matches:
-                    should_not_replace = False
-                    for o in omit:
-                        if key_path == o.key_path and o.type == "KEY" and o.overlaps(match.start(), match.end()):
-                            should_not_replace = True
-                            break
-                    if should_not_replace:
-                        # print(f"BAD: {key[match.start(): match.end()]}")
-                        continue
+                    ##### Check if escaped
+                    should_replace = True
+                    before_match = key[:match.start()]
+                    escapes = re.search("\\\\+$", before_match)
+                    if escapes is not None:
+                        length = escapes.end() - escapes.start()
+                        # Escape backslashes (essentially half them)
+                        new_key = new_key[:escapes.start() + offset] + ("\\" * int(length / 2)) + new_key[escapes.end() + offset:]
+                        offset -= int(length / 2)
+                        if length % 2 != 0:  # odd
+                            should_replace = False  # Dont replace if ${{}} is escaped
 
-                    # print(f"GOOD: {key[match.start(): match.end()]}")
-
-
-
-                    if token == Token.GRAVE:
-                        omit.append(DictSlice("KEY", match.start(), match.end(), key_path))
-                    if token == Token.FUNC:
-                        pass
-                    if token == Token.VAR:
-                        new_key = key[:match.start()] + "OIJOIJ" + key[match.end():]
-                        new_key = pattern.sub("daWDwdw", key)
-            if key != new_key:
-                print(f"Changed key:'{new_key}'")
+                    if should_replace:
+                        if token == Token.FUNC:
+                            pass
+                        if token == Token.VAR:
+                            for label, var_value in variables.items():
+                                var_name = key[match.start() + 3:match.end() - 2].strip()  # Remove ${{ and }}
+                                if var_name == label:
+                                    if type(var_value) != str:
+                                        err(f"Cannot substitute the non-string variable '{label}' in a key!")
+                                    new_key = new_key[:match.start() + offset] + var_value + new_key[match.end() + offset:]
+                                    offset += len(var_value) - (match.end() - match.start())
             return new_key, val
 
         for i, res in enumerate(self.resources):
             self.resources[i] = recursive_map(func, res)
 
-
-
-    def replace_variables_for_res(self, variables: dict, res: benedict, potentials = benedict({}, keypath_separator=None)) -> benedict:
+    def replace_variables_for_res(self, variables: dict, res: benedict,
+                                  potentials=benedict({}, keypath_separator=None)) -> benedict:
         old_keys: list = []
         new_keys: list = []
 
@@ -102,7 +100,7 @@ class Resources:
 
         ### Implement ${{}} syntax
         for index, old_key in enumerate(old_keys):
-            if new_keys[index][-1] == "": # if ${{}}
+            if new_keys[index][-1] == "":  # if ${{}}
                 value = res.pop(old_key)
                 if len(old_key) > 2 and isinstance(res[old_key[:-2]], list):
                     if not isinstance(value, list):
@@ -114,7 +112,7 @@ class Resources:
                     if not isinstance(value, dict):
                         err("Using ${{}} syntax in a map means the value should also be a map")
                     res[old_key[:-1]] = {**res[old_key[:-1]], **value}
-                elif len(old_key) == 1: # This is top level
+                elif len(old_key) == 1:  # This is top level
                     if not isinstance(value, dict):
                         err("Using ${{}} syntax in a map means the value should also be a map")
                     res = {**res, **value}
@@ -122,20 +120,17 @@ class Resources:
                     err("Only arrays or maps can be used with the ${{}} syntax")
             else:
                 res[new_keys[index]] = res.pop(old_key)
-                
+
         return res
 
-
-
-
-
     ## // TODO: convert recusion into loop
-    def recurse_replace_variables_for_res(self, variables: dict, res: benedict,  old_keys = [], new_keys = [], key_path = [], *, cur_pass = "value"):
+    def recurse_replace_variables_for_res(self, variables: dict, res: benedict, old_keys=[], new_keys=[], key_path=[],
+                                          *, cur_pass="value"):
         iterable = res.keys()
         if key_path != []:
             iterable = range(len(res[key_path])) if type(res[key_path]) == list else res[key_path].keys()
 
-        for key in iterable: # Could be a list or dict
+        for key in iterable:  # Could be a list or dict
             key = [*key_path, key]
             pattern = re.compile("\$\{\{.*}\}")
             if cur_pass == "value":
@@ -155,18 +150,14 @@ class Resources:
             key_path.pop()
         return res
 
-
-
-
-
     def replace_res_values(self, res: benedict, key: list, pattern, variables: dict):
         from copy import deepcopy
-        
+
         if type(res[key]) == str:
             value_matches = pattern.finditer(res[key])
             for match in value_matches:
                 var_name = res[key][match.start() + 3:match.end() - 2].strip()
-                
+
                 for label, value in variables.items():
                     if var_name == label:
                         if type(value) != str:
@@ -174,10 +165,6 @@ class Resources:
                         else:
                             res[key] = res[key][:match.start()] + str(value) + res[key][match.end():]
                         break
-    
-
-
-
 
     def get_key_replacements(self, res, key, pattern, variables) -> Tuple[List, List]:
         new_keys, old_keys = [], []
@@ -194,10 +181,8 @@ class Resources:
                     new_key_value = key[-1][:match.start()] + str(value) + key[-1][match.end():]
                     old_keys.append(key)
                     new_keys.append([*key[:-1], new_key_value])
-                    
+
         return old_keys, new_keys
-
-
 
     def __str__(self):
         string = ""
