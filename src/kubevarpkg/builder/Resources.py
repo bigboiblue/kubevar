@@ -1,7 +1,9 @@
+from math import ceil
+
 from ..util.yaml import load_yaml
-from ..util.checking import err
+from ..util.checking import err, warn
 from benedict import benedict
-from typing import List, Tuple, Any, Dict
+from typing import List, Tuple, Any, Dict, Match
 import yaml
 import re
 from ..util.dict import recursive_map
@@ -51,39 +53,64 @@ class Resources:
         from ..token import Token
 
         def func(key: str, val: Any, key_path: list) -> tuple:
-            key_path = tuple(key_path)
-            new_key = key
+            def replace_var(old: str, new: Any, match: Match, offset: int, *, is_key = True) -> Any:
+                ##### Check if escaped
+                should_replace = True
+                before_match = old[:match.start()]
+                escapes = re.search("\\\\+$", before_match)
+                if escapes is not None:
+                    length = escapes.end() - escapes.start()
+                    # Escape backslashes (essentially half them)
+                    new = new[:escapes.start() + offset] + ("\\" * int(length / 2)) + new[escapes.end() + offset:]
+                    offset -= length - int(length / 2)
+                    if length % 2 != 0:  # odd
+                        should_replace = False  # Dont replace if ${{}} is escaped
+
+                if should_replace:
+                    if token == Token.FUNC:
+                        pass
+                    if token == Token.VAR:
+                        for label, var_value in variables.items():
+                            var_name = old[match.start() + 3:match.end() - 2].strip()  # Remove ${{ and }}
+                            if var_name == label:
+                                if is_key:  # Key of an attribute
+                                    if type(var_value) != str and not isinstance(var_value, dict):
+                                        err(f"Cannot substitute the '{label}' in a key! Only strings or maps can be substituted into a key (maps will overwrite the value associated with the key)")
+                                    if type(var_value) == str:
+                                        new = new[:match.start() + offset] + var_value + new[match.end() + offset:]
+                                        offset += len(var_value) - (match.end() - match.start())
+                                    elif isinstance(var_value, dict):
+                                        new = var_value
+                                        warn(f"The variable {label} is a map, and replaces a key. This appends the variable (map) to the parent map.\nA preferred syntax that leads to the same behaviour is to use '~append$(( {label} ))' as the value and any placeholder as the key (the key will be overwritten so it does not matter)")
+                                else:  # The value of an attribute
+                                    if type(var_value) in [str, int, float, bool]:
+                                        new = new[:match.start() + offset] + str(var_value) + new[match.end() + offset:]
+                                        offset += len(str(var_value)) - (match.end() - match.start())
+                                    elif isinstance(var_value, dict) or type(var_value) == list:
+                                        new = var_value
+
+                return new, offset
+
+            # key_path = tuple(key_path)
+            new_key, new_value = key, val
             for token in Token:
                 if token == Token.ESCAPE:
                     continue
-                offset = 0
                 pattern = re.compile(token.value)
+
+                offset = 0
                 key_matches = pattern.finditer(str(key))
                 for match in key_matches:
-                    ##### Check if escaped
-                    should_replace = True
-                    before_match = key[:match.start()]
-                    escapes = re.search("\\\\+$", before_match)
-                    if escapes is not None:
-                        length = escapes.end() - escapes.start()
-                        # Escape backslashes (essentially half them)
-                        new_key = new_key[:escapes.start() + offset] + ("\\" * int(length / 2)) + new_key[escapes.end() + offset:]
-                        offset -= int(length / 2)
-                        if length % 2 != 0:  # odd
-                            should_replace = False  # Dont replace if ${{}} is escaped
+                    new_key, offset = replace_var(str(key), new_key, match, offset, is_key=True)
 
-                    if should_replace:
-                        if token == Token.FUNC:
-                            pass
-                        if token == Token.VAR:
-                            for label, var_value in variables.items():
-                                var_name = key[match.start() + 3:match.end() - 2].strip()  # Remove ${{ and }}
-                                if var_name == label:
-                                    if type(var_value) != str:
-                                        err(f"Cannot substitute the non-string variable '{label}' in a key!")
-                                    new_key = new_key[:match.start() + offset] + var_value + new_key[match.end() + offset:]
-                                    offset += len(var_value) - (match.end() - match.start())
-            return new_key, val
+                offset = 0
+                value_matches = []
+                if type(val) not in [dict, list, benedict]:
+                    value_matches = pattern.finditer(str(val))
+                    for match in value_matches:
+                        new_value, offset = replace_var(str(val), new_value, match, offset, is_key=False)
+
+            return new_key, new_value
 
         for i, res in enumerate(self.resources):
             self.resources[i] = recursive_map(func, res)
