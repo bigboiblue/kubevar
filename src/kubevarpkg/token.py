@@ -28,6 +28,6 @@ class Token(Enum):
 
     # __order__ <--  Order is automatically generated
     ESCAPE = "\\"
-    FUNC = FuncType("\~\w*\$\(\(.*\)\)", "(?<=\~)\w*(?=\$\(\(.*\)\))", "(?<=\$\(\().*(?=\)\))") # //TODO: Dissalow comma, $ { ( ) } [ ]
+    FUNC = FuncType("\w*\(\(.*\)\)", "\w*(?=\(\(.*\)\))", "(?<=\w\(\().*(?=\)\))") # //TODO: Dissalow comma, $ { ( ) } [ ]
     VAR = TokenType("\$\{\{[^(${{)]*\}\}", "(?<=\$\{\{)[^(${{)]*(?=\}\})") # Will still need to strip the variable of whitespace
 
