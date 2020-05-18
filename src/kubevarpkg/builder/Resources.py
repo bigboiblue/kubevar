@@ -106,7 +106,8 @@ class Resources:
         ### Replace
         if should_replace:
             if token == Token.FUNC:
-                print(token_label)
+                params = [token.value.get_param(match_string, i).strip() for i in range(match_string.count(',') + 1)]
+                print(f"Function Name {token_label} --- params: {params}")
                 if token_label == Function.BASE64.value:
                     pass
                 elif token_label == Function.APPEND.value:
