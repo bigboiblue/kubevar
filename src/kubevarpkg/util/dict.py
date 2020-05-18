@@ -2,9 +2,15 @@ from typing import Dict, List, Tuple, Union, Optional, Any, Callable
 from copy import deepcopy
 from .checking import err
 
+class MapFlags:
+    def __init__(self):
+        self.append = False  # Append dict / list to current dict \ list being iterated
+        self.omit = False  # Dont include returned key / val in new map
+
+
 FuncType = Callable[[str, Any, list], tuple]
 def recursive_map(func: FuncType, it: Union[list, dict], key_path = []) -> Union[list, dict]:
-    """func(x, y) must have 2 params (key and value) and return a tuple (key, value).
+    """func(x, y) must have 2 params (key and value) and return a tuple (key, value, flags). (See MapFlags for flag info)
     This will be added to new map. If None is returned, nothing is added
     The list / dict passed is traversed using a breadth first traversal
 
@@ -21,14 +27,19 @@ def recursive_map(func: FuncType, it: Union[list, dict], key_path = []) -> Union
             if key in new:
                 new.pop(key)
         else:
-            new_key, new_value = ret
+            new_key, new_value, flags = ret
 
+            ### Ensures dicts / lists aren't added twice when keys change
             if it[key] == new_value and type(new_value) == list:  # Nothing changed & list
                 new_value = []
             elif it[key] == new_value and isinstance(new_value, dict): # Nothing changed & dict
                 new_value = {}  # Dont add whole dict, will be traversed later anyway
-            if type(new_key) == list or isinstance(new_key, dict) or type(new_key) == dict:
-                new = append(new, new_key)
+
+            if flags.append:
+                if type(new) == list:
+                    new = [*new, *new_value]
+                elif isinstance(new, dict):
+                    new = {**new, **new_value}
             else:
                 new = append(new, new_value, new_key)
 
@@ -40,17 +51,10 @@ def recursive_map(func: FuncType, it: Union[list, dict], key_path = []) -> Union
 
 
 def append(it: Union[list, dict], val: Any, key = None) -> Union[list, dict]:
-    """Appends val to it (whether it be a list or dict).
-    If it is a dict, and no key is entered, the val dict and it map are shallow merged"""
     new_it = it
     if type(new_it) == list:
         new_it.append(val)
     elif isinstance(new_it, dict):
-        if key is None:
-            if isinstance(val, dict):
-                new_it = {**new_it, **val}
-            else:
-                err("If no key is specified when appending to a dict, a the input should be a dict")
-        else:
-            new_it[key] = val
+        new_it[key] = val
     return new_it
+

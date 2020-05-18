@@ -6,7 +6,7 @@ from benedict import benedict
 from typing import List, Tuple, Any, Dict, Match
 import yaml
 import re
-from ..util.dict import recursive_map
+from ..util.dict import recursive_map, MapFlags
 from ..token import Token
 from ..function import Function
 
@@ -55,6 +55,7 @@ class Resources:
 
         def func(key: str, val: Any, key_path: list) -> tuple:
             new_key, new_value = key, val
+            flags = MapFlags()
             for token in Token:
                 if token == Token.ESCAPE:
                     continue
@@ -63,15 +64,14 @@ class Resources:
                 offset = 0
                 key_matches = pattern.finditer(str(key))
                 for match in key_matches:
-                    new_key, offset = self.replace_token(token, str(key), new_key, match, offset, variables, is_key=True)
+                    new_key, offset, flags = self.replace_token(token, str(key), new_key, match, offset, variables, is_key=True)
 
                 offset = 0
                 if type(val) not in [dict, list, benedict]:
                     value_matches = pattern.finditer(str(val))
                     for match in value_matches:
-                        new_value, offset = self.replace_token(token, str(val), new_value, match, offset, variables, is_key=False)
-
-            return new_key, new_value
+                        new_value, offset, flags = self.replace_token(token, str(val), new_value, match, offset, variables, is_key=False)
+            return new_key, new_value, flags
 
         for i, res in enumerate(self.resources):
             self.resources[i] = recursive_map(func, res)
@@ -95,6 +95,7 @@ class Resources:
         token_label = match_string[label_match.start(): label_match.end()] if label_match is not None else ""
         before_match = old[:match.start()]
         escapes = re.search("\\\\+$", before_match)
+        flags = MapFlags()
         if escapes is not None:
             length = escapes.end() - escapes.start()
             # Escape backslashes (essentially half them)
@@ -111,7 +112,13 @@ class Resources:
                 if token_label == Function.BASE64.value:
                     pass
                 elif token_label == Function.APPEND.value:
-                    pass
+                    if len(params) != 1:
+                        err(f"The {Function.APPEND.value} function should only have one argument. {len(params)} arguments found...") # // TODO store this information in Functions class, so this can be auto checked
+                    for label, var_value in variables.items():
+                        if label == params[0]:
+                            flags.append = True
+                            new = var_value
+                            break
             elif token == Token.VAR:
                 for label, var_value in variables.items():
                     var_name = old[match.start() + 3:match.end() - 2].strip()  # Remove ${{ and }} // TODO Remove values 3 and -2, and calculate the number of chars until var_name instead
@@ -131,7 +138,7 @@ class Resources:
                                 offset += len(str(var_value)) - (match.end() - match.start())
                             elif isinstance(var_value, dict) or type(var_value) == list:
                                 new = var_value
-        return new, offset
+        return new, offset, flags
 
     def __str__(self):
         string = ""
