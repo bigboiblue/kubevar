@@ -8,6 +8,7 @@ import yaml
 import re
 from ..util.dict import recursive_map
 from ..token import Token
+from ..function import Function
 
 
 class Resources:
@@ -57,7 +58,7 @@ class Resources:
             for token in Token:
                 if token == Token.ESCAPE:
                     continue
-                pattern = re.compile(token.value)
+                pattern = re.compile(token.value.token_reg)
 
                 offset = 0
                 key_matches = pattern.finditer(str(key))
@@ -88,6 +89,10 @@ class Resources:
 
         ##### Check if escaped
         should_replace = True
+        match_string = old[match.start():match.end()]
+        pattern = re.compile(token.value.name_reg)
+        label_match = pattern.search(match_string)
+        token_label = match_string[label_match.start(): label_match.end()] if label_match is not None else ""
         before_match = old[:match.start()]
         escapes = re.search("\\\\+$", before_match)
         if escapes is not None:
@@ -101,10 +106,14 @@ class Resources:
         ### Replace
         if should_replace:
             if token == Token.FUNC:
-                pass
-            if token == Token.VAR:
+                print(token_label)
+                if token_label == Function.BASE64.value:
+                    pass
+                elif token_label == Function.APPEND.value:
+                    pass
+            elif token == Token.VAR:
                 for label, var_value in variables.items():
-                    var_name = old[match.start() + 3:match.end() - 2].strip()  # Remove ${{ and }}
+                    var_name = old[match.start() + 3:match.end() - 2].strip()  # Remove ${{ and }} // TODO Remove values 3 and -2, and calculate the number of chars until var_name instead
                     if var_name == label:
                         if is_key:  # Key of an attribute
                             if type(var_value) != str and not isinstance(var_value, dict):

@@ -1,7 +1,5 @@
 import click
 
-
-
 def get_globbed_paths(paths) -> list:
     from glob import glob
     from .util.checking import err

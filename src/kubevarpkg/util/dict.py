@@ -27,8 +27,6 @@ def recursive_map(func: FuncType, it: Union[list, dict], key_path = []) -> Union
                 new_value = []
             elif it[key] == new_value and isinstance(new_value, dict): # Nothing changed & dict
                 new_value = {}  # Dont add whole dict, will be traversed later anyway
-
-            print(type(new_key) == list or isinstance(new_key, dict) or type(new_key) == dict)
             if type(new_key) == list or isinstance(new_key, dict) or type(new_key) == dict:
                 new = append(new, new_key)
             else:
